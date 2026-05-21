@@ -1,42 +1,54 @@
 package ec.edu.puce.githubclient.ui.screens
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import ec.edu.puce.githubclient.ui.components.RepoItem
+import ec.edu.puce.githubclient.viewmodels.RepoListViewModel
 
 @Composable
 fun Repolist(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: RepoListViewModel = viewModel()
 ) {
-    Column (
-        modifier = modifier
-    ){
+    val repos by viewModel.repos.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMsg by viewModel.errorMsg.collectAsState()
 
-        RepoItem(
-            name = "Repositorio de Android",
-            description = "Repositorio creado en Ktolin para el desarrollo movil",
-            avatarUrl = "https://avatars.githubusercontent.com/u/216223767?v=4",
-            language = "Kotlin"
-        )
-        RepoItem(
-            name = "Repositorio de Ios",
-            description = "Repositorio creado en Django para el desarrollo movil",
-            avatarUrl = "https://avatars.githubusercontent.com/u/216223767?v=4",
-            language = "Django"
-        )
-        RepoItem(
-            name = "Repositorio de Django",
-            description = "Repositorio creado en React para el desarrollo movil",
-            avatarUrl = "https://avatars.githubusercontent.com/u/216223767?v=4",
-            language = "React"
-        )
-        RepoItem(
-            name = "Repositorio de React",
-            description = "Repositorio creado en Swift para el desarrollo movil",
-            avatarUrl = "https://avatars.githubusercontent.com/u/216223767?v=4",
-            language = "Swift"
-            //MI NOMBRE ES DAVID SALOMON
-        )
+    Box(
+        modifier = modifier.fillMaxSize()
+    ){
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+
+        errorMsg?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.Center)
+                    .padding( all = 16.dp)
+            )
+        }
+
+        if(!isLoading && errorMsg.isNullOrBlank()) {
+            LazyColumn (modifier = Modifier.fillMaxSize()) {
+                items( count = repos.size) { i ->
+                    RepoItem( repository = repos[i])
+                }
+            }
+        }
     }
 }
