@@ -20,13 +20,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             GithubClientTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Repolist(
-                        modifier = Modifier.padding(innerPadding)
-
-                    )
+                Repolist()
                 }
             }
         }
     }
-}

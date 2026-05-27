@@ -21,11 +21,16 @@ object RetrofitClient {
 
             val request = chain.request().newBuilder()
                 .addHeader("Authorization", "Bearer $token")
+                .addHeader( name = "Cache-Control", value = "no-cache, no-store, must-revalidate")
+                .addHeader("Pragma", "no-cache")
+                .addHeader("Expires", "0")
+                .addHeader( name = "Connection", value = "close")
                 .build()
 
             chain.proceed(request)
         }
         .build()
+
 
     val apiService: ApiService by lazy {
         Retrofit.Builder()
