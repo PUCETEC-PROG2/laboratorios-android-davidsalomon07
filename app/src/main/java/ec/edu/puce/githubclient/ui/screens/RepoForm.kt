@@ -8,14 +8,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +52,11 @@ fun RepoForm(
     val errorMsg by viewModel.errorMsg.collectAsState()
     val isSuccess by viewModel.isSuccess.collectAsState()
 
+    if (isSuccess) {
+        onSaveSuccess()
+        viewModel.resetSuccess()
+    }
+
     var name by remember { mutableStateOf(value = "") }
     var description by remember { mutableStateOf(value = "") }
 
@@ -60,9 +67,9 @@ fun RepoForm(
                     Text(text = "Crear Repositorio")
                 },
                 navigationIcon = {
-                        IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Regresar"
                         )
                     }
@@ -125,19 +132,36 @@ fun RepoForm(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(
-                        onClick = {viewModel.createRepo(name, description) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-
-                        Icon(
-                            imageVector = Icons.Default.Send,
-                            contentDescription = "Guardar"
+                    if (errorMsg != null) {
+                        Text(
+                            text = errorMsg!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 16.dp)
                         )
+                    }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                    Button(
+                        onClick = { viewModel.createRepo(name, description) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading && name.isNotBlank()
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Guardar"
+                            )
 
-                        Text(text = "Guardar")
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Text(text = "Guardar")
+                        }
                     }
                 }
             }

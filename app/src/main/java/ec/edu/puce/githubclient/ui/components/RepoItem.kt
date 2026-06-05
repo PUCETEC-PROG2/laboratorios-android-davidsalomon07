@@ -20,10 +20,16 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import ec.edu.puce.githubclient.models.GithubUser
 import ec.edu.puce.githubclient.models.Repository
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 @Composable
 fun RepoItem(
-    repository: Repository
+    repository: Repository,
+    onEdit: (Repository) -> Unit = {},
+    onDelete: (Repository) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -58,12 +64,41 @@ fun RepoItem(
                     )
                 }
 
-                Spacer(modifier = Modifier.height( height = 4.dp))
-                if  (!repository.language.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(height = 4.dp))
+
+                if (!repository.language.isNullOrBlank()) {
                     Text(
-                        text= repository.language,
+                        text = repository.language,
                         style = MaterialTheme.typography.labelSmall,
                     )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row {
+
+                    IconButton(
+                        onClick = {
+                            onEdit(repository)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar"
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            onDelete(repository)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Eliminar"
+                        )
+                    }
+
                 }
             }
         }
@@ -80,7 +115,7 @@ fun RepoitemPreview () {
         language = "Kotlin",
         owner = GithubUser (
             id = "123",
-            Login = "davidsalomon",
+            login = "davidsalomon",
             avatarUrl = "",
         )
     )

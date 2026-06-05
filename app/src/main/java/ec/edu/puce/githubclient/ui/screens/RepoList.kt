@@ -23,6 +23,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ec.edu.puce.githubclient.ui.components.RepoItem
 import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
 import ec.edu.puce.githubclient.viewmodels.RepoListViewModel
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ec.edu.puce.githubclient.models.Repository
 
 @Composable
 fun RepoList(
@@ -34,10 +40,14 @@ fun RepoList(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMsg by viewModel.errorMsg.collectAsState()
 
+    var repoToDelete by remember {
+        mutableStateOf<Repository?>(null)
+    }
+
     Scaffold (
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = onNavigateToForm,
                 shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onBackground,
@@ -72,12 +82,91 @@ fun RepoList(
             if (!isLoading && errorMsg.isNullOrBlank()) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(count = repos.size) { i ->
-                        RepoItem(repository = repos[i])
+
+                        RepoItem(
+                            repository = repos[i],
+
+                            onEdit = { repo ->
+
+                                viewModel.updateRepository(
+                                    owner = repo.owner.login,
+                                    repoName = repo.name,
+                                    newName = repo.name,
+                                    newDescription = repo.description ?: ""
+                                )
+
+                            },
+
+                            onDelete = { repo ->
+
+                                repoToDelete = repo
+
+                            }
+
+                        )
+
                     }
                 }
             }
         }
     }
+
+    repoToDelete?.let { repo ->
+
+        AlertDialog(
+            onDismissRequest = {
+                repoToDelete = null
+            },
+
+            title = {
+                Text("Eliminar repositorio")
+            },
+
+            text = {
+                Text(
+                    "¿Seguro que deseas eliminar \"${repo.name}\"?"
+                )
+            },
+
+            confirmButton = {
+
+                TextButton(
+                    onClick = {
+
+                        viewModel.deleteRepository(
+                            owner = repo.owner.login,
+                            repoName = repo.name
+                        )
+
+                        repoToDelete = null
+
+                    }
+                ) {
+
+                    Text("Eliminar")
+
+                }
+
+            },
+
+            dismissButton = {
+
+                TextButton(
+                    onClick = {
+                        repoToDelete = null
+                    }
+                ) {
+
+                    Text("Cancelar")
+
+                }
+
+            }
+
+        )
+
+    }
+
 }
 
 

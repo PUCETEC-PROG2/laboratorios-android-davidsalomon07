@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import ec.edu.puce.githubclient.models.RepositoryPayload
 
 class RepoListViewModel : ViewModel() {
     private val _repos = MutableStateFlow<List<Repository>>( value = emptyList())
@@ -32,6 +33,63 @@ class RepoListViewModel : ViewModel() {
                 _errorMsg.value = "Error al cargar repositorios: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateRepository(
+        owner: String,
+        repoName: String,
+        newName: String,
+        newDescription: String
+    ) {
+        viewModelScope.launch {
+
+            try {
+
+                val payload = RepositoryPayload(
+                    name = newName,
+                    description = newDescription
+                )
+
+                RetrofitClient.apiService.updateRepository(
+                    owner = owner,
+                    repo = repoName,
+                    repository = payload
+                )
+
+                fetchRepos()
+
+            } catch (e: Exception) {
+
+                _errorMsg.value =
+                    "Error al actualizar repositorio: ${e.localizedMessage}"
+
+            }
+        }
+    }
+
+    fun deleteRepository(
+        owner: String,
+        repoName: String
+    ) {
+
+        viewModelScope.launch {
+
+            try {
+
+                RetrofitClient.apiService.deleteRepository(
+                    owner = owner,
+                    repo = repoName
+                )
+
+                fetchRepos()
+
+            } catch (e: Exception) {
+
+                _errorMsg.value =
+                    "Error al eliminar repositorio: ${e.localizedMessage}"
+
             }
         }
     }

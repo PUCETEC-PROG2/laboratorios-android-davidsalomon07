@@ -26,8 +26,10 @@ class RepoFormViewModel: ViewModel() {
             try {
                 val repoBody = RepositoryPayload(name, description)
                 RetrofitClient.apiService.createRepository(repository = repoBody)
+                _isSuccess.value = true
             } catch (e: Exception) {
-                _errorMsg.value = "Error al cargar repositorio: ${e.localizedMessage}"
+                _errorMsg.value =
+                    "Error al cargar repositorio: ${e.localizedMessage}"
             } finally {
                 _isLoading.value = false
             }
