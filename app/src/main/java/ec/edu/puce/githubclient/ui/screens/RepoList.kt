@@ -15,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,163 +28,112 @@ import ec.edu.puce.githubclient.ui.theme.GithubClientTheme
 import ec.edu.puce.githubclient.viewmodels.RepoListViewModel
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import ec.edu.puce.githubclient.models.Repository
 
+/**
+ * Pantalla principal que muestra la lista de repositorios.
+ * Implementa la lógica de eliminación con confirmación y la navegación al formulario.
+ */
 @Composable
 fun RepoList(
     modifier: Modifier = Modifier,
-    viewModel : RepoListViewModel = viewModel(),
-    onNavigateToForm: () -> Unit = {}
+    viewModel: RepoListViewModel = viewModel(),
+    onNavigateToForm: (Repository?) -> Unit = {} // null significa "Nuevo Repositorio"
 ) {
     val repos by viewModel.repos.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMsg by viewModel.errorMsg.collectAsState()
 
-    var repoToDelete by remember {
-        mutableStateOf<Repository?>(null)
-    }
+    // Estado local para manejar el diálogo de confirmación de borrado
+    var repoToDelete by remember { mutableStateOf<Repository?>(null) }
 
-    Scaffold (
+    Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onNavigateToForm,
+                onClick = { onNavigateToForm(null) }, // Modo creación
                 shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onBackground,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Agregar"
+                    contentDescription = "Agregar Repositorio"
                 )
             }
         }
     ) { innerPadding ->
         Box(
-            modifier = modifier.fillMaxSize()
+            modifier = modifier
+                .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                )
+            // Indicador de carga global
+            if (isLoading && repos.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
+            // Mensaje de error (si existe)
             errorMsg?.let {
                 Text(
                     text = it,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(all = 16.dp)
+                        .padding(16.dp)
                 )
             }
-            if (!isLoading && errorMsg.isNullOrBlank()) {
+
+            // Lista de Repositorios
+            if (repos.isNotEmpty()) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(count = repos.size) { i ->
-
+                    items(repos) { repo ->
                         RepoItem(
-                            repository = repos[i],
-
-                            onEdit = { repo ->
-
-                                viewModel.updateRepository(
-                                    owner = repo.owner.login,
-                                    repoName = repo.name,
-                                    newName = repo.name,
-                                    newDescription = repo.description ?: ""
-                                )
-
-                            },
-
-                            onDelete = { repo ->
-
-                                repoToDelete = repo
-
-                            }
-
+                            repository = repo,
+                            onEdit = { onNavigateToForm(repo) }, // Modo edición
+                            onDelete = { repoToDelete = it } // Dispara el diálogo
                         )
-
                     }
                 }
+            } else if (!isLoading && errorMsg == null) {
+                Text(
+                    text = "No hay repositorios disponibles.",
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }
 
+    // Diálogo de confirmación para eliminar
     repoToDelete?.let { repo ->
-
         AlertDialog(
-            onDismissRequest = {
-                repoToDelete = null
+            onDismissRequest = { repoToDelete = null },
+            title = { Text("Eliminar repositorio") },
+            text = { 
+                Text("¿Estás seguro de que deseas eliminar \"${repo.name}\"?\n\nEsta acción es irreversible y se reflejará en tu cuenta de GitHub.") 
             },
-
-            title = {
-                Text("Eliminar repositorio")
-            },
-
-            text = {
-                Text(
-                    "¿Seguro que deseas eliminar \"${repo.name}\"?"
-                )
-            },
-
             confirmButton = {
-
                 TextButton(
                     onClick = {
-
-                        viewModel.deleteRepository(
-                            owner = repo.owner.login,
-                            repoName = repo.name
-                        )
-
+                        viewModel.deleteRepository(repo.owner.login, repo.name)
                         repoToDelete = null
-
                     }
                 ) {
-
-                    Text("Eliminar")
-
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
                 }
-
             },
-
             dismissButton = {
-
-                TextButton(
-                    onClick = {
-                        repoToDelete = null
-                    }
-                ) {
-
+                TextButton(onClick = { repoToDelete = null }) {
                     Text("Cancelar")
-
                 }
-
             }
-
         )
-
     }
-
 }
-
-
-// ==============================
-// PREVIEW PARA ANDROID STUDIO
-// ==============================
 
 @Preview(showBackground = true)
 @Composable
 fun RepoListPreview() {
-
-    // Aplica el tema visual personalizado
     GithubClientTheme {
-
-        // Muestra la pantalla
         RepoList()
     }
 }
